@@ -1,0 +1,41 @@
+my.bin.width <- .5
+hist(M1_spikes$phi,breaks=seq(0,10,by=my.bin.width))
+
+# Likelihood - problem 3
+alpha <- 30
+beta <- 30
+v.max <- .0161
+
+phi.pref <- seq(-pi, pi, length=100)
+
+lambda <- function (x) alpha + (beta * ((M1_spikes$V)/1000 / v.max)) * cos(M1_spikes$phi - x)
+L <- function (x) sum(log(lambda(x)) * M1_spikes$spikes - lambda(x))
+fisher <- (L(0.9202645+0.01)-2*L(0.9202645)+L(0.9202645-0.01))/(0.01)^2
+plot(sapply(phi.pref, L))
+
+d <- sapply(phi.pref, L)
+
+phiFunction <- alpha + (beta* (M1_spikes$V / v.max) * cos(M1_spikes$phi - 0.9202645))
+plot(M1_spikes$T,phiFunction)
+
+#rate function
+me <- seq(0,length(M1_spikes$T),by=1)
+me <- vlikelihood(0.9202645)
+plot(M1_spikes$T,M1_spikes$spikes,type="l",ylin=c(0,55),xlab="Time (ms)", ylab= "Rate", main="Spike Times")
+lines(M1_spikes$T,me,col="red")
+
+#rescaled Waiting times
+timespikes <- M1_spikes$T[M1_spikes$spikes>0]
+library(MESS)
+z <- numeric(237)
+z[1] <- auc(TT,me/1000, from=0, to=timespikes[1])
+for (i in seq(2,237,by=1)) { z[i] <- auc(TT,me/1000,from=timespikes[i-1],to=timespikes[i])}
+
+hist(timespikes,main="Histogram of ISIs",xlab="Interspike Intervals",col="white",breaks=21)
+hist(z,main="Histogram of Rescaled Waiting Times",col="white")
+
+#KS
+Femp <- ecdf(z)
+xs <- seq(0,4,.01)
+plot(xs,Femp(xs))
+plot(Femp(xs),pexp(xs,1))
